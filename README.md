@@ -1,2 +1,20 @@
-# audit-checklist-app
-감사 체크리스트 웹앱을 만드는 Codex 실습용 저장소
+# Audit Checklist App
+
+This is a simple practice project for learning Codex web.
+
+## Goal
+
+Create a small web app that helps users manage an audit checklist.
+
+## Features
+
+- Add checklist items
+- Mark items as completed
+- Delete checklist items
+- Save items in the browser if possible
+- Keep the design simple and readable
+
+## Notes
+
+This project uses only sample data.
+Do not include confidential, personal, or company internal information.

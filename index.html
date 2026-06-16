@@ -9,22 +9,57 @@
 <body>
   <main class="app-shell" aria-labelledby="app-title">
     <section class="header-panel">
-      <p class="eyebrow">업무 점검 관리</p>
-      <h1 id="app-title">감사 체크리스트</h1>
-      <p class="description">점검 항목을 등록하고 완료 여부를 관리하세요. 입력한 내용은 브라우저에 저장됩니다.</p>
+      <div>
+        <p class="eyebrow">업무 점검 관리</p>
+        <h1 id="app-title">감사 체크리스트</h1>
+        <p class="description">점검 항목을 등록하고 분야, 우선순위, 완료 여부를 함께 관리하세요.</p>
+      </div>
+      <div class="summary-panel" aria-label="체크리스트 현황">
+        <div class="summary-card">
+          <span class="summary-label">전체 항목</span>
+          <strong id="total-count">0건</strong>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">완료 항목</span>
+          <strong id="completed-count">0건</strong>
+        </div>
+      </div>
     </section>
 
     <section class="card" aria-label="점검 항목 입력">
       <form id="checklist-form" class="input-row">
-        <label for="item-input" class="sr-only">점검 항목</label>
-        <input
-          id="item-input"
-          type="text"
-          maxlength="100"
-          placeholder="예: 증빙 서류 제출 여부 확인"
-          autocomplete="off"
-          required
-        >
+        <div class="field-group item-field">
+          <label for="item-input">점검 항목</label>
+          <input
+            id="item-input"
+            type="text"
+            maxlength="100"
+            placeholder="예: 증빙 서류 제출 여부 확인"
+            autocomplete="off"
+            required
+          >
+        </div>
+
+        <div class="field-group">
+          <label for="category-select">분야</label>
+          <select id="category-select" required>
+            <option value="계약">계약</option>
+            <option value="예산">예산</option>
+            <option value="복무">복무</option>
+            <option value="보안">보안</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label for="priority-select">우선순위</label>
+          <select id="priority-select" required>
+            <option value="높음">높음</option>
+            <option value="보통" selected>보통</option>
+            <option value="낮음">낮음</option>
+          </select>
+        </div>
+
         <button type="submit" class="primary-button">추가</button>
       </form>
       <p id="form-message" class="form-message" aria-live="polite"></p>
@@ -32,8 +67,15 @@
 
     <section class="card checklist-card" aria-label="점검 항목 목록">
       <div class="list-header">
-        <h2>점검 항목</h2>
+        <h2>점검 항목 목록</h2>
         <span id="item-count" class="item-count">0건</span>
+      </div>
+      <div class="table-header" aria-hidden="true">
+        <span>항목명</span>
+        <span>분야</span>
+        <span>우선순위</span>
+        <span>완료 여부</span>
+        <span>관리</span>
       </div>
       <ul id="checklist" class="checklist"></ul>
       <p id="empty-state" class="empty-state">등록된 점검 항목이 없습니다. 새 항목을 추가해 주세요.</p>

@@ -2,22 +2,13 @@ const STORAGE_KEY = 'auditChecklistItems';
 const DEFAULT_CATEGORY = '기타';
 const DEFAULT_PRIORITY = '보통';
 
-const form = document.querySelector('#checklist-form');
-const input = document.querySelector('#item-input');
-const categorySelect = document.querySelector('#category-select');
-const prioritySelect = document.querySelector('#priority-select');
-const checklist = document.querySelector('#checklist');
-const emptyState = document.querySelector('#empty-state');
-const itemCount = document.querySelector('#item-count');
-const totalCount = document.querySelector('#total-count');
-const completedCount = document.querySelector('#completed-count');
-const formMessage = document.querySelector('#form-message');
-const searchInput = document.querySelector('#search-input');
-const clearSearchButton = document.querySelector('#clear-search-button');
-const searchMessage = document.querySelector('#search-message');
+function createItemId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
 
-let items = loadItems();
-let searchQuery = '';
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 function normalizeItem(item) {
   return {
@@ -29,176 +20,235 @@ function normalizeItem(item) {
   };
 }
 
-function loadItems() {
-  const savedItems = localStorage.getItem(STORAGE_KEY);
-
-  if (!savedItems) {
-    return [];
-  }
-
-  try {
-    const parsedItems = JSON.parse(savedItems);
-    return Array.isArray(parsedItems) ? parsedItems.map(normalizeItem) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveItems() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-}
-
-function createMeta(label, value, className) {
-  const wrapper = document.createElement('span');
-  wrapper.className = `meta-badge ${className}`;
-
-  const srLabel = document.createElement('span');
-  srLabel.className = 'sr-only';
-  srLabel.textContent = `${label}: `;
-
-  wrapper.append(srLabel, document.createTextNode(value));
-  return wrapper;
-}
-
 function getItemStatusLabel(item) {
   return item.completed ? '완료' : '진행 중';
 }
 
-function getFilteredItems() {
-  const query = searchQuery.trim().toLowerCase();
+function filterItems(checklistItems, query) {
+  const normalizedQuery = query.trim().toLowerCase();
 
-  if (!query) {
-    return items;
+  if (!normalizedQuery) {
+    return checklistItems;
   }
 
-  return items.filter((item) => (
-    item.text.toLowerCase().includes(query)
-    || item.category.toLowerCase().includes(query)
-    || item.priority.toLowerCase().includes(query)
-    || getItemStatusLabel(item).toLowerCase().includes(query)
+  return checklistItems.filter((item) => (
+    item.text.toLowerCase().includes(normalizedQuery)
+    || item.category.toLowerCase().includes(normalizedQuery)
+    || item.priority.toLowerCase().includes(normalizedQuery)
+    || getItemStatusLabel(item).toLowerCase().includes(normalizedQuery)
   ));
 }
 
-function renderItems() {
-  checklist.innerHTML = '';
-
-  const filteredItems = getFilteredItems();
-
-  filteredItems.forEach((item) => {
-    const listItem = document.createElement('li');
-    listItem.className = `checklist-item${item.completed ? ' completed' : ''}`;
-    listItem.dataset.id = item.id;
-
-    const itemText = document.createElement('span');
-    itemText.className = 'item-text';
-    itemText.textContent = item.text;
-
-    const category = createMeta('분야', item.category, 'category-badge');
-    const priority = createMeta('우선순위', item.priority, `priority-badge priority-${item.priority}`);
-    const status = createMeta('완료 여부', getItemStatusLabel(item), 'status-badge');
-
-    const actions = document.createElement('div');
-    actions.className = 'item-actions';
-
-    const completeButton = document.createElement('button');
-    completeButton.type = 'button';
-    completeButton.className = 'complete-button';
-    completeButton.textContent = item.completed ? '완료 취소' : '완료';
-    completeButton.addEventListener('click', () => toggleItem(item.id));
-
-    const deleteButton = document.createElement('button');
-    deleteButton.type = 'button';
-    deleteButton.className = 'delete-button';
-    deleteButton.textContent = '삭제';
-    deleteButton.addEventListener('click', () => deleteItem(item.id));
-
-    actions.append(completeButton, deleteButton);
-    listItem.append(itemText, category, priority, status, actions);
-    checklist.appendChild(listItem);
-  });
-
-  const completedItems = items.filter((item) => item.completed).length;
-  const hasSearchQuery = searchQuery.trim().length > 0;
-
-  emptyState.hidden = hasSearchQuery ? filteredItems.length > 0 : items.length > 0;
-  emptyState.textContent = hasSearchQuery
-    ? '검색 조건에 맞는 점검 항목이 없습니다.'
-    : '등록된 점검 항목이 없습니다. 새 항목을 추가해 주세요.';
-  itemCount.textContent = hasSearchQuery
-    ? `${filteredItems.length} / ${items.length}건`
-    : `${items.length}건`;
-  totalCount.textContent = `${items.length}건`;
-  completedCount.textContent = `${completedItems}건`;
-  searchMessage.textContent = hasSearchQuery
-    ? `검색 결과 ${filteredItems.length}건이 표시됩니다.`
-    : '';
-  clearSearchButton.hidden = !hasSearchQuery;
+function toggleItemCompletion(checklistItems, id) {
+  return checklistItems.map((item) => (
+    item.id === id ? { ...item, completed: !item.completed } : item
+  ));
 }
 
-function createItemId() {
-  if (crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+function deleteChecklistItem(checklistItems, id) {
+  return checklistItems.filter((item) => item.id !== id);
 }
 
-function addItem(text, category, priority) {
-  items.unshift({
+function calculateStats(checklistItems) {
+  return {
+    total: checklistItems.length,
+    completed: checklistItems.filter((item) => item.completed).length,
+  };
+}
+
+function createChecklistItem(text, category, priority) {
+  return normalizeItem({
     id: createItemId(),
     text,
     category,
     priority,
     completed: false,
   });
-  saveItems();
-  renderItems();
 }
 
-function toggleItem(id) {
-  items = items.map((item) => (
-    item.id === id ? { ...item, completed: !item.completed } : item
-  ));
-  saveItems();
-  renderItems();
-}
+function createChecklistApp() {
+  const form = document.querySelector('#checklist-form');
+  const input = document.querySelector('#item-input');
+  const categorySelect = document.querySelector('#category-select');
+  const prioritySelect = document.querySelector('#priority-select');
+  const checklist = document.querySelector('#checklist');
+  const emptyState = document.querySelector('#empty-state');
+  const itemCount = document.querySelector('#item-count');
+  const totalCount = document.querySelector('#total-count');
+  const completedCount = document.querySelector('#completed-count');
+  const formMessage = document.querySelector('#form-message');
+  const searchInput = document.querySelector('#search-input');
+  const clearSearchButton = document.querySelector('#clear-search-button');
+  const searchMessage = document.querySelector('#search-message');
 
-function deleteItem(id) {
-  items = items.filter((item) => item.id !== id);
-  saveItems();
-  renderItems();
-}
+  let items = loadItems();
+  let searchQuery = '';
 
-searchInput.addEventListener('input', (event) => {
-  searchQuery = event.target.value;
-  renderItems();
-});
+  function loadItems() {
+    const savedItems = localStorage.getItem(STORAGE_KEY);
 
-clearSearchButton.addEventListener('click', () => {
-  searchQuery = '';
-  searchInput.value = '';
-  renderItems();
-  searchInput.focus();
-});
+    if (!savedItems) {
+      return [];
+    }
 
-form.addEventListener('submit', (event) => {
-  event.preventDefault();
-
-  const text = input.value.trim();
-  const category = categorySelect.value;
-  const priority = prioritySelect.value;
-
-  if (!text) {
-    formMessage.textContent = '점검 항목을 입력해 주세요.';
-    input.focus();
-    return;
+    try {
+      const parsedItems = JSON.parse(savedItems);
+      return Array.isArray(parsedItems) ? parsedItems.map(normalizeItem) : [];
+    } catch {
+      return [];
+    }
   }
 
-  formMessage.textContent = '';
-  addItem(text, category, priority);
-  form.reset();
-  prioritySelect.value = DEFAULT_PRIORITY;
-  input.focus();
-});
+  function saveItems() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  }
 
-renderItems();
+  function createMeta(label, value, className) {
+    const wrapper = document.createElement('span');
+    wrapper.className = `meta-badge ${className}`;
+
+    const srLabel = document.createElement('span');
+    srLabel.className = 'sr-only';
+    srLabel.textContent = `${label}: `;
+
+    wrapper.append(srLabel, document.createTextNode(value));
+    return wrapper;
+  }
+
+  function getFilteredItems() {
+    return filterItems(items, searchQuery);
+  }
+
+  function renderItems() {
+    checklist.innerHTML = '';
+
+    const filteredItems = getFilteredItems();
+
+    filteredItems.forEach((item) => {
+      const listItem = document.createElement('li');
+      listItem.className = `checklist-item${item.completed ? ' completed' : ''}`;
+      listItem.dataset.id = item.id;
+
+      const itemText = document.createElement('span');
+      itemText.className = 'item-text';
+      itemText.textContent = item.text;
+
+      const category = createMeta('분야', item.category, 'category-badge');
+      const priority = createMeta('우선순위', item.priority, `priority-badge priority-${item.priority}`);
+      const status = createMeta('완료 여부', getItemStatusLabel(item), 'status-badge');
+
+      const actions = document.createElement('div');
+      actions.className = 'item-actions';
+
+      const completeButton = document.createElement('button');
+      completeButton.type = 'button';
+      completeButton.className = 'complete-button';
+      completeButton.textContent = item.completed ? '완료 취소' : '완료';
+      completeButton.addEventListener('click', () => toggleItem(item.id));
+
+      const deleteButton = document.createElement('button');
+      deleteButton.type = 'button';
+      deleteButton.className = 'delete-button';
+      deleteButton.textContent = '삭제';
+      deleteButton.addEventListener('click', () => deleteItem(item.id));
+
+      actions.append(completeButton, deleteButton);
+      listItem.append(itemText, category, priority, status, actions);
+      checklist.appendChild(listItem);
+    });
+
+    const stats = calculateStats(items);
+    const hasSearchQuery = searchQuery.trim().length > 0;
+
+    emptyState.hidden = hasSearchQuery ? filteredItems.length > 0 : items.length > 0;
+    emptyState.textContent = hasSearchQuery
+      ? '검색 조건에 맞는 점검 항목이 없습니다.'
+      : '등록된 점검 항목이 없습니다. 새 항목을 추가해 주세요.';
+    itemCount.textContent = hasSearchQuery
+      ? `${filteredItems.length} / ${stats.total}건`
+      : `${stats.total}건`;
+    totalCount.textContent = `${stats.total}건`;
+    completedCount.textContent = `${stats.completed}건`;
+    searchMessage.textContent = hasSearchQuery
+      ? `검색 결과 ${filteredItems.length}건이 표시됩니다.`
+      : '';
+    clearSearchButton.hidden = !hasSearchQuery;
+  }
+
+  function addItem(text, category, priority) {
+    items.unshift(createChecklistItem(text, category, priority));
+    saveItems();
+    renderItems();
+  }
+
+  function toggleItem(id) {
+    items = toggleItemCompletion(items, id);
+    saveItems();
+    renderItems();
+  }
+
+  function deleteItem(id) {
+    items = deleteChecklistItem(items, id);
+    saveItems();
+    renderItems();
+  }
+
+  searchInput.addEventListener('input', (event) => {
+    searchQuery = event.target.value;
+    renderItems();
+  });
+
+  clearSearchButton.addEventListener('click', () => {
+    searchQuery = '';
+    searchInput.value = '';
+    renderItems();
+    searchInput.focus();
+  });
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const text = input.value.trim();
+    const category = categorySelect.value;
+    const priority = prioritySelect.value;
+
+    if (!text) {
+      formMessage.textContent = '점검 항목을 입력해 주세요.';
+      input.focus();
+      return;
+    }
+
+    formMessage.textContent = '';
+    addItem(text, category, priority);
+    form.reset();
+    prioritySelect.value = DEFAULT_PRIORITY;
+    input.focus();
+  });
+
+  renderItems();
+
+  return {
+    addItem,
+    toggleItem,
+    deleteItem,
+    getFilteredItems,
+  };
+}
+
+if (typeof document !== 'undefined') {
+  createChecklistApp();
+}
+
+if (typeof module !== 'undefined') {
+  module.exports = {
+    DEFAULT_CATEGORY,
+    DEFAULT_PRIORITY,
+    normalizeItem,
+    getItemStatusLabel,
+    filterItems,
+    toggleItemCompletion,
+    deleteChecklistItem,
+    calculateStats,
+    createChecklistItem,
+  };
+}

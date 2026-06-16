@@ -31,6 +31,11 @@ python3 -m http.server 8000
 - 새로 추가된 분야와 우선순위 정보도 `localStorage`에 함께 저장
 - 외부 라이브러리 없이 HTML, CSS, JavaScript만 사용
 - 공공기관 업무용 화면을 참고한 단정하고 읽기 쉬운 PC 중심 디자인
+- 항목 완료 표시 및 완료 취소
+- 항목 삭제
+- 브라우저 `localStorage`를 사용한 새로고침 후 목록 유지
+- 외부 라이브러리 없이 HTML, CSS, JavaScript만 사용
+- 공공기관 업무용 화면을 참고한 단정하고 읽기 쉬운 디자인
 
 ## Notes
 

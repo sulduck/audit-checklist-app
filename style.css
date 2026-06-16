@@ -129,6 +129,7 @@ h1 {
 }
 
 input[type="text"],
+input[type="search"],
 select {
   width: 100%;
   min-height: 48px;
@@ -144,6 +145,7 @@ select {
 }
 
 input[type="text"]:focus,
+input[type="search"]:focus,
 select:focus {
   outline: 3px solid rgba(23, 74, 124, 0.18);
   border-color: var(--primary);
@@ -170,6 +172,17 @@ button {
   background: var(--primary-dark);
 }
 
+.secondary-button {
+  min-height: 48px;
+  background: #eef4fb;
+  border-color: #d6e1ee;
+  color: var(--primary);
+}
+
+.secondary-button:hover {
+  background: #dceaf7;
+}
+
 .form-message {
   min-height: 24px;
   margin: 10px 0 0;
@@ -190,6 +203,21 @@ button {
 .list-header h2 {
   margin-bottom: 0;
   font-size: 1.25rem;
+}
+
+.search-panel {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 16px 0;
+}
+
+.search-message {
+  min-height: 22px;
+  margin: -6px 0 10px;
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 
 .item-count {
@@ -353,6 +381,7 @@ button {
 
   .header-panel,
   .input-row,
+  .search-panel,
   .table-header,
   .checklist-item {
     grid-template-columns: 1fr;

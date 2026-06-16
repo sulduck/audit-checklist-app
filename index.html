@@ -70,6 +70,19 @@
         <h2>점검 항목 목록</h2>
         <span id="item-count" class="item-count">0건</span>
       </div>
+      <div class="search-panel">
+        <div class="field-group search-field">
+          <label for="search-input">검색</label>
+          <input
+            id="search-input"
+            type="search"
+            placeholder="항목명, 분야, 우선순위, 완료 여부 검색"
+            autocomplete="off"
+          >
+        </div>
+        <button id="clear-search-button" type="button" class="secondary-button" hidden>검색 초기화</button>
+      </div>
+      <p id="search-message" class="search-message" aria-live="polite"></p>
       <div class="table-header" aria-hidden="true">
         <span>항목명</span>
         <span>분야</span>

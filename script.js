@@ -12,8 +12,12 @@ const itemCount = document.querySelector('#item-count');
 const totalCount = document.querySelector('#total-count');
 const completedCount = document.querySelector('#completed-count');
 const formMessage = document.querySelector('#form-message');
+const searchInput = document.querySelector('#search-input');
+const clearSearchButton = document.querySelector('#clear-search-button');
+const searchMessage = document.querySelector('#search-message');
 
 let items = loadItems();
+let searchQuery = '';
 
 function normalizeItem(item) {
   return {
@@ -56,10 +60,31 @@ function createMeta(label, value, className) {
   return wrapper;
 }
 
+function getItemStatusLabel(item) {
+  return item.completed ? '완료' : '진행 중';
+}
+
+function getFilteredItems() {
+  const query = searchQuery.trim().toLowerCase();
+
+  if (!query) {
+    return items;
+  }
+
+  return items.filter((item) => (
+    item.text.toLowerCase().includes(query)
+    || item.category.toLowerCase().includes(query)
+    || item.priority.toLowerCase().includes(query)
+    || getItemStatusLabel(item).toLowerCase().includes(query)
+  ));
+}
+
 function renderItems() {
   checklist.innerHTML = '';
 
-  items.forEach((item) => {
+  const filteredItems = getFilteredItems();
+
+  filteredItems.forEach((item) => {
     const listItem = document.createElement('li');
     listItem.className = `checklist-item${item.completed ? ' completed' : ''}`;
     listItem.dataset.id = item.id;
@@ -70,7 +95,7 @@ function renderItems() {
 
     const category = createMeta('분야', item.category, 'category-badge');
     const priority = createMeta('우선순위', item.priority, `priority-badge priority-${item.priority}`);
-    const status = createMeta('완료 여부', item.completed ? '완료' : '진행 중', 'status-badge');
+    const status = createMeta('완료 여부', getItemStatusLabel(item), 'status-badge');
 
     const actions = document.createElement('div');
     actions.className = 'item-actions';
@@ -93,11 +118,21 @@ function renderItems() {
   });
 
   const completedItems = items.filter((item) => item.completed).length;
+  const hasSearchQuery = searchQuery.trim().length > 0;
 
-  emptyState.hidden = items.length > 0;
-  itemCount.textContent = `${items.length}건`;
+  emptyState.hidden = hasSearchQuery ? filteredItems.length > 0 : items.length > 0;
+  emptyState.textContent = hasSearchQuery
+    ? '검색 조건에 맞는 점검 항목이 없습니다.'
+    : '등록된 점검 항목이 없습니다. 새 항목을 추가해 주세요.';
+  itemCount.textContent = hasSearchQuery
+    ? `${filteredItems.length} / ${items.length}건`
+    : `${items.length}건`;
   totalCount.textContent = `${items.length}건`;
   completedCount.textContent = `${completedItems}건`;
+  searchMessage.textContent = hasSearchQuery
+    ? `검색 결과 ${filteredItems.length}건이 표시됩니다.`
+    : '';
+  clearSearchButton.hidden = !hasSearchQuery;
 }
 
 function createItemId() {
@@ -133,6 +168,18 @@ function deleteItem(id) {
   saveItems();
   renderItems();
 }
+
+searchInput.addEventListener('input', (event) => {
+  searchQuery = event.target.value;
+  renderItems();
+});
+
+clearSearchButton.addEventListener('click', () => {
+  searchQuery = '';
+  searchInput.value = '';
+  renderItems();
+  searchInput.focus();
+});
 
 form.addEventListener('submit', (event) => {
   event.preventDefault();
